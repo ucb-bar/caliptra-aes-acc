@@ -45,8 +45,6 @@ module AesCipherCoreWrapper_AES256_ECB_NoMask
 
   sp2v_e in_valid_i_conv;
   sp2v_e out_ready_i_conv;
-  logic in_ready_o;
-  logic out_valid_o;
   sp2v_e crypt_i_conv;
   sp2v_e dec_key_gen_i_conv;
   sp2v_e in_ready_o_conv;

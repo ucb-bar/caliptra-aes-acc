@@ -6,7 +6,7 @@
 #include "rocc.h"
 #include <stdbool.h>
 
-#define AES256_OPCODE 5
+#define AES256_OPCODE 1
 
 #define FUNCT_SFENCE 0
 #define FUNCT_SRC_INFO 1

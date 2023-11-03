@@ -9,11 +9,11 @@ import org.chipsalliance.cde.config.{Parameters}
 import freechips.rocketchip.util.{DecoupledHelper}
 import testchipip.{StreamWidener, StreamNarrower}
 import roccaccutils._
+import roccaccutils.logger._
 
-import L2MemHelperConsts._
 import AES256Consts._
 
-class AES256ECB(val logger: AccelLogger = DefaultAccelLogger)(implicit val p: Parameters) extends MemStreamer {
+class AES256ECB(val logger: Logger = DefaultLogger)(implicit val p: Parameters, val hp: L2MemHelperParams) extends MemStreamer {
   class AES256ECBBundle extends MemStreamerBundle {
     val key = Flipped(Valid(UInt(AES256Consts.KEY_SZ_BITS.W))) //from CommandRouter
     val mode = Flipped(Valid(Bool())) //from CommandRouter
@@ -24,7 +24,7 @@ class AES256ECB(val logger: AccelLogger = DefaultAccelLogger)(implicit val p: Pa
 
   val aes = Module(new AesCipherCoreDriver)
 
-  assert(BLOCK_SZ_BITS <= BUS_SZ_BITS, "Need the bus bits to be greater than the block bits")
+  assert(BLOCK_SZ_BITS <= BUS_SZ_BITS, "Need the bus bits to be greater than (or equal to) the block bits")
 
   val snarrower = Module(new StreamNarrower(BUS_SZ_BITS, BLOCK_SZ_BITS))
   val swidener = Module(new StreamWidener(BLOCK_SZ_BITS, BUS_SZ_BITS))

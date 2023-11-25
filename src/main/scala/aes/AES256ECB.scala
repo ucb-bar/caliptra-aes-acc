@@ -8,8 +8,9 @@ import chisel3.util._
 import org.chipsalliance.cde.config.{Parameters}
 import freechips.rocketchip.util.{DecoupledHelper}
 import testchipip.{StreamWidener, StreamNarrower}
-import roccaccutils._
 import roccaccutils.logger._
+import roccaccutils.memutils._
+import roccaccutils.memstreamer._
 
 import AES256Consts._
 

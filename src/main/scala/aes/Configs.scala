@@ -9,7 +9,6 @@ import org.chipsalliance.cde.config.{Config, Parameters, Field}
 import freechips.rocketchip.tile.{BuildRoCC, OpcodeSet}
 import freechips.rocketchip.rocket.{TLBConfig}
 import freechips.rocketchip.diplomacy.{LazyModule}
-import roccaccutils._
 
 case object AES256ECBAccelInsertXbarBetweenMemory extends Field[Boolean](true)
 case object AES256ECBAccelCmdQueueDepth extends Field[Int](2)

@@ -10,8 +10,11 @@
 #define AES_BLOCK_BITS (128)
 #define AES_BLOCK_BYTES (AES_BLOCK_BITS / 8)
 
-#define ROUNDS 12
-#define MAX_DATA_LEN_BYTES ((ROUNDS + 1) * AES_BLOCK_BYTES)
+#define OFFSET_COUNT 12
+#define OFFSET_PADDING_BYTES 32 // currently set to BUS_SZ (doesn't need to be BUS_SZ)
+
+#define ROUNDS 12 // must be >= offset count
+#define MAX_DATA_LEN_BYTES (((ROUNDS) * AES_BLOCK_BYTES) + OFFSET_PADDING_BYTES)
 
 void print_blocks(unsigned char* data, size_t blk_cnt) {
   for (size_t i = 0; i < blk_cnt; i++) {
@@ -46,9 +49,7 @@ int main() {
     data[i] = i;
   }
 
-  // offsets in bytes
-  #define OFFSET_COUNT 12
-  #define OFFSET_PADDING_BYTES 32 // currently set to BUS_SZ (doesn't need to be BUS_SZ)
+  // offsets in bytes (determined by OFFSET_COUNT)
   size_t  data_offsets[] = {24, 8, 16,  1, 12, 32, 3,  6, 18,  2,  0,  4};
   size_t  ciph_offsets[] = {12, 2,  8, 16,  0,  3, 4, 24,  6, 32,  1, 18};
   size_t plain_offsets[] = { 1, 3, 24,  6, 32, 12, 4,  2,  0,  8, 18, 16};

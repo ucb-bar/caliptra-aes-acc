@@ -11,7 +11,8 @@ import freechips.rocketchip.rocket.{TLBConfig}
 import freechips.rocketchip.diplomacy.{LazyModule}
 
 case object AES256ECBAccelInsertXbarBetweenMemory extends Field[Boolean](true)
-case object AES256ECBAccelCmdQueueDepth extends Field[Int](2)
+case object AES256ECBAccelCmdQueueDepth extends Field[Int](4)
+case object AES256ECBAccelDataQueueDepth extends Field[Int](16)
 
 class WithAES256ECBAccel extends Config ((site, here, up) => {
   case AES256AccelTLB => Some(TLBConfig(nSets = 4, nWays = 4, nSectors = 1, nSuperpageEntries = 1))

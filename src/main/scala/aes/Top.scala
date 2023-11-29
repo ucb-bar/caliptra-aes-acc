@@ -31,9 +31,10 @@ class AES256ECBAccel(opcodes: OpcodeSet)(implicit p: Parameters) extends MemStre
 class AES256ECBAccelImp(outer: AES256ECBAccel)(implicit p: Parameters)
   extends MemStreamerRoCCImp(outer) {
 
-  lazy val queueDepth = p(AES256ECBAccelCmdQueueDepth)
+  lazy val metadataQueueDepth = p(AES256ECBAccelCmdQueueDepth)
+  lazy val dataQueueDepth = p(AES256ECBAccelDataQueueDepth)
 
-  lazy val cmd_router = Module(new CommandRouter(queueDepth))
+  lazy val cmd_router = Module(new CommandRouter(metadataQueueDepth))
   lazy val streamer = Module(new AES256ECB(outer.logger))
 
   streamer.io.key <> cmd_router.io.key

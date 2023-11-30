@@ -32,7 +32,7 @@ unsigned char* Aes256AccelSetup(size_t write_region_size_bytes) {
     return fixed_alloc_region;
 }
 
-volatile int Aes256BlockOnCompletion(volatile int * completion_flag) {
+volatile int64_t Aes256BlockOnCompletion(volatile int64_t * completion_flag) {
     uint64_t retval;
 #ifndef NOACCEL_DEBUG
     ROCC_INSTRUCTION_D(AES256_OPCODE, retval, FUNCT_CHECK_COMPLETION);
@@ -55,7 +55,7 @@ void Aes256AccelNonblocking(bool encrypt,
                             uint64_t key2,
                             uint64_t key3,
                             unsigned char* result,
-                            int* success_flag) {
+                            int64_t* success_flag) {
     assert (data_length % 16 == 0 && "Data length must be divisible by block size of 128b (16B)");
 #ifndef NOACCEL_DEBUG
     ROCC_INSTRUCTION_SS(AES256_OPCODE,
@@ -92,7 +92,7 @@ int Aes256Accel(bool encrypt,
                 uint64_t key2,
                 uint64_t key3,
                 unsigned char* result) {
-    int completion_flag = 0;
+    int64_t completion_flag = 0;
 
 #ifdef NOACCEL_DEBUG
     printf("completion_flag addr : 0x%x\n", &completion_flag);

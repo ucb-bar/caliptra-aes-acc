@@ -26,7 +26,7 @@ void Aes256AccelNonblocking(bool encrypt,
                             uint64_t key2,
                             uint64_t key3,
                             unsigned char* result,
-                            int* success_flag);
+                            int64_t* success_flag);
 
 int Aes256Accel(bool encrypt,
                 const unsigned char* data,

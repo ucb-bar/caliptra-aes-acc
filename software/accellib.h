@@ -3,7 +3,12 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#define USING_OPCODE8
+#ifdef USING_OPCODE8
+#include "rocc_opcode8.h"
+#else
 #include "rocc.h"
+#endif
 #include <stdbool.h>
 
 #define AES256_OPCODE 1

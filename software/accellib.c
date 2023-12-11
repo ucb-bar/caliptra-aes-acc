@@ -84,7 +84,7 @@ void Aes256AccelNonblocking(bool encrypt,
 #endif
 }
 
-int Aes256Accel(bool encrypt,
+int64_t Aes256Accel(bool encrypt,
                 const unsigned char* data,
                 size_t data_length,
                 uint64_t key0,

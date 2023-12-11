@@ -28,7 +28,7 @@ void Aes256AccelNonblocking(bool encrypt,
                             unsigned char* result,
                             int64_t* success_flag);
 
-int Aes256Accel(bool encrypt,
+int64_t Aes256Accel(bool encrypt,
                 const unsigned char* data,
                 size_t data_length,
                 uint64_t key0,
@@ -37,6 +37,6 @@ int Aes256Accel(bool encrypt,
                 uint64_t key3,
                 unsigned char* result);
 
-volatile int Aes256BlockOnCompletion(volatile int * completion_flag);
+volatile int64_t Aes256BlockOnCompletion(volatile int64_t * completion_flag);
 
 #endif //__ACCEL_H

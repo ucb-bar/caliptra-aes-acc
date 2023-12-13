@@ -27,7 +27,6 @@ class AES256ECB(val logger: Logger = DefaultLogger)(implicit val p: Parameters, 
 
   assert(BLOCK_SZ_BITS <= BUS_SZ_BITS, "Need the bus bits to be greater than (or equal to) the block bits")
 
-  val snarrower = Module(new StreamNarrower(BUS_SZ_BITS, BLOCK_SZ_BITS))
   val swidener = Module(new StreamWidener(BLOCK_SZ_BITS, BUS_SZ_BITS))
 
   val key = RegInit(0.U(AES256Consts.KEY_SZ_BITS.W))
@@ -42,7 +41,7 @@ class AES256ECB(val logger: Logger = DefaultLogger)(implicit val p: Parameters, 
   val last_queue = Module(new Queue(Bool(), 5)) // keep track of stream.bits.last in aes compute
 
   val na_fire = DecoupledHelper(
-    snarrower.io.out.valid,
+    io.mem_stream.req.ready,
     last_queue.io.enq.ready,
     aes.io.in.ready
   )
@@ -53,16 +52,19 @@ class AES256ECB(val logger: Logger = DefaultLogger)(implicit val p: Parameters, 
     swidener.io.in.ready
   )
 
-  last_queue.io.enq.bits := snarrower.io.out.bits.last
+  last_queue.io.enq.bits := io.mem_stream.output_last_chunk
   last_queue.io.enq.valid := na_fire.fire(last_queue.io.enq.ready)
   last_queue.io.deq.ready := aw_fire.fire(last_queue.io.deq.valid)
 
   aes.io.in.bits.key := key
   aes.io.in.bits.encrypt := mode
 
-  aes.io.in.bits.data := snarrower.io.out.bits.data
-  aes.io.in.valid := snarrower.io.out.valid
-  snarrower.io.out.ready := na_fire.fire(snarrower.io.out.valid)
+  // Connect AES core input to MemLoader
+
+  aes.io.in.bits.data := io.mem_stream.output_data
+  aes.io.in.valid := na_fire.fire(aes.io.in.ready)
+  io.mem_stream.req.valid := na_fire.fire(io.mem_stream.req.ready)
+  io.mem_stream.req.bits := BLOCK_SZ_BYTES.U
 
   swidener.io.in.bits.data := aes.io.out.bits.data
   swidener.io.in.bits.keep := (1.U << BLOCK_SZ_BYTES) - 1.U
@@ -71,18 +73,7 @@ class AES256ECB(val logger: Logger = DefaultLogger)(implicit val p: Parameters, 
   swidener.io.in.valid := aw_fire.fire(swidener.io.in.ready)
   aes.io.out.ready := aw_fire.fire(aes.io.out.valid)
 
-  snarrower.io.in.bits.data := load_data_queue.io.deq.bits.chunk_data
-  snarrower.io.in.bits.keep := (1.U << load_data_queue.io.deq.bits.chunk_size_bytes) - 1.U
-  snarrower.io.in.bits.last := load_data_queue.io.deq.bits.is_final_chunk
-
-  val narrow_fire = DecoupledHelper(
-    load_data_queue.io.deq.valid,
-    snarrower.io.in.ready,
-  )
-  snarrower.io.in.valid := narrow_fire.fire(snarrower.io.in.ready)
-  load_data_queue.io.deq.ready := narrow_fire.fire(load_data_queue.io.deq.valid)
-
-  // Connect AES core output to MemWriter (i.e. store_data_queue)
+  // Connect AES core output to MemWriter
 
   store_data_queue.io.enq.bits.chunk_data := swidener.io.out.bits.data
   store_data_queue.io.enq.bits.chunk_size_bytes := PopCount(swidener.io.out.bits.keep)

@@ -7,9 +7,10 @@ import chisel3.util._
 
 import org.chipsalliance.cde.config.{Parameters}
 import freechips.rocketchip.util.DecoupledHelper
-import roccaccutils._
+import roccaccutils.memutils._
+import roccaccutils.memstreamer._
 
-class CommandRouter(val cmd_queue_depth: Int)(implicit val p: Parameters) extends StreamingCommandRouter {
+class CommandRouter(val cmdQueueDepth: Int)(implicit val p: Parameters) extends MemStreamerCommandRouter {
   class AesStreamerCmdBundle()(implicit p: Parameters) extends MemStreamerCmdBundle {
     val key = Valid(UInt(AES256Consts.KEY_SZ_BITS.W))
     val mode = Valid(Bool())
@@ -21,7 +22,7 @@ class CommandRouter(val cmd_queue_depth: Int)(implicit val p: Parameters) extend
   val FUNCT_KEY_1                         = 6.U
 
   // Mode interface
-  val mode_queue = Module(new Queue(Bool(), cmd_queue_depth))
+  val mode_queue = Module(new Queue(Bool(), cmdQueueDepth))
   mode_queue.io.enq.bits := cur_rs1
   val mode_fire = DecoupledHelper(
     io.rocc_in.valid,
@@ -34,7 +35,7 @@ class CommandRouter(val cmd_queue_depth: Int)(implicit val p: Parameters) extend
   mode_queue.io.deq.ready := true.B
 
   // Key interface
-  val key_queue = Module(new Queue(UInt(AES256Consts.KEY_SZ_BITS.W), cmd_queue_depth))
+  val key_queue = Module(new Queue(UInt(AES256Consts.KEY_SZ_BITS.W), cmdQueueDepth))
   val key_lower_128 = RegInit(0.U(128.W))
   val key0_fire = DecoupledHelper(
     io.rocc_in.valid,
@@ -55,7 +56,7 @@ class CommandRouter(val cmd_queue_depth: Int)(implicit val p: Parameters) extend
   io.key.valid <> key_queue.io.deq.valid
   key_queue.io.deq.ready := true.B
 
-  // streaming_fire provided by StreamingCommandRouter
+  // streaming_fire provided by MemStreamerCommandRouter
   io.rocc_in.ready := streaming_fire ||
     mode_fire.fire(io.rocc_in.valid) ||
     key0_fire.fire(io.rocc_in.valid) ||

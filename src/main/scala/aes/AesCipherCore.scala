@@ -9,7 +9,8 @@ import chisel3.util._
 import chisel3.util.random.{LFSR}
 
 import freechips.rocketchip.util.{DecoupledHelper}
-import roccaccutils._
+import roccaccutils.memutils._
+import roccaccutils.memstreamer._
 
 // Non-exhaustive list of resources used to integrate:
 //   https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf

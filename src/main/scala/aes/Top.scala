@@ -11,11 +11,12 @@ import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.subsystem.{SystemBusKey}
 import freechips.rocketchip.rocket.constants.MemoryOpConstants
 import freechips.rocketchip.tilelink._
-import roccaccutils._
+import roccaccutils.memutils._
+import roccaccutils.memstreamer._
 
 case object AES256AccelTLB extends Field[Option[TLBConfig]](None)
 
-class AES256ECBAccel(opcodes: OpcodeSet)(implicit p: Parameters) extends MemStreamerAccel(
+class AES256ECBAccel(opcodes: OpcodeSet)(implicit p: Parameters) extends MemStreamerRoCC(
   opcodes = opcodes) {
 
   override lazy val module = new AES256ECBAccelImp(this)
@@ -28,11 +29,12 @@ class AES256ECBAccel(opcodes: OpcodeSet)(implicit p: Parameters) extends MemStre
 }
 
 class AES256ECBAccelImp(outer: AES256ECBAccel)(implicit p: Parameters)
-  extends MemStreamerAccelImp(outer) {
+  extends MemStreamerRoCCImp(outer) {
 
-  lazy val queueDepth = p(AES256ECBAccelCmdQueueDepth)
+  lazy val metadataQueueDepth = p(AES256ECBAccelCmdQueueDepth)
+  lazy val dataQueueDepth = p(AES256ECBAccelDataQueueDepth)
 
-  lazy val cmd_router = Module(new CommandRouter(queueDepth))
+  lazy val cmd_router = Module(new CommandRouter(metadataQueueDepth))
   lazy val streamer = Module(new AES256ECB(outer.logger))
 
   streamer.io.key <> cmd_router.io.key

@@ -3,7 +3,12 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#define USING_OPCODE8
+#ifdef USING_OPCODE8
+#include "rocc_opcode8.h"
+#else
 #include "rocc.h"
+#endif
 #include <stdbool.h>
 
 #define AES256_OPCODE 1
@@ -26,9 +31,9 @@ void Aes256AccelNonblocking(bool encrypt,
                             uint64_t key2,
                             uint64_t key3,
                             unsigned char* result,
-                            int* success_flag);
+                            int64_t* success_flag);
 
-int Aes256Accel(bool encrypt,
+int64_t Aes256Accel(bool encrypt,
                 const unsigned char* data,
                 size_t data_length,
                 uint64_t key0,
@@ -37,6 +42,6 @@ int Aes256Accel(bool encrypt,
                 uint64_t key3,
                 unsigned char* result);
 
-volatile int Aes256BlockOnCompletion(volatile int * completion_flag);
+volatile int64_t Aes256BlockOnCompletion(volatile int64_t * completion_flag);
 
 #endif //__ACCEL_H

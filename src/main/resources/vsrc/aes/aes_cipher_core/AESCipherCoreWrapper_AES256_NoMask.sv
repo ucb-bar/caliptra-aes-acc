@@ -1,6 +1,6 @@
 // See LICENSE for license details
 
-module AesCipherCoreWrapper_AES256_ECB_NoMask
+module AESCipherCoreWrapper_AES256_NoMask
 (
   input  logic                        clk_i,
   input  logic                        rst_ni,

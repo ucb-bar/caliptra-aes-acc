@@ -10,9 +10,9 @@ import midas.targetutils.{SynthesizePrintf}
 import roccaccutils._
 import roccaccutils.logger._
 
-case object AES256ECBAccelPrintfSynth extends Field[Boolean](true)
+case object AESCBCAccelPrintfSynth extends Field[Boolean](true)
 
-object AES256ECBLogger extends Logger {
+object AESCBCLogger extends Logger {
   // just print info msgs
   def logInfoImplPrintWrapper(printf: chisel3.printf.Printf)(implicit p: Parameters = Parameters.empty): chisel3.printf.Printf = {
     printf
@@ -20,7 +20,7 @@ object AES256ECBLogger extends Logger {
 
   // optionally synthesize critical msgs
   def logCriticalImplPrintWrapper(printf: chisel3.printf.Printf)(implicit p: Parameters = Parameters.empty): chisel3.printf.Printf = {
-    if (p(AES256ECBAccelPrintfSynth)) {
+    if (p(AESCBCAccelPrintfSynth)) {
       SynthesizePrintf(printf)
     } else {
       printf

@@ -28,13 +28,24 @@ int main() {
   unsigned char data[MAX_DATA_LEN_BYTES];
   for (size_t i = 0; i < MAX_DATA_LEN_BYTES; ++i) {
     data[i] = i;
+    //data[i] = 0;
   }
 
   // initialize random key
   uint64_t key[4];
   for (size_t i = 0; i < 4; ++i) {
     key[i] = i * 2;
+    //key[i] = 0;
   }
+
+  // initialize random iv
+  uint64_t iv[2];
+  for (size_t i = 0; i < 2; ++i) {
+    iv[i] = (i + 1) * 4;
+    //iv[i] = 0;
+  }
+
+  AESCBCPinPages();
 
   // begin ROUNDS of encrypt/decrypt (ROUND is i * AES_BLOCK_BYTES encrypt/decrypt + check)
   for (size_t r = 1; r <= ROUNDS; ++r) {
@@ -44,7 +55,7 @@ int main() {
 
     printf(">> Encrypt start: L:%lu\n", data_len);
 
-    uint8_t* ciphertext_area = Aes256AccelSetup(data_len); // fence, write zero
+    uint8_t* ciphertext_area = AESCBCAccelSetup(data_len); // fence, write zero
 
     printf("src start addr: 0x%016" PRIx64 "\n", (uint64_t)data);
     printf("dest start addr: 0x%016" PRIx64 "\n", (uint64_t)ciphertext_area);
@@ -52,13 +63,15 @@ int main() {
     uint64_t t1 = rdcycle();
 
     // encrypt
-    Aes256Accel(true,
+    AESCBCAccel(true,
                 data,
                 data_len,
                 key[0],
                 key[1],
                 key[2],
                 key[3],
+                iv[0],
+                iv[1],
                 ciphertext_area);
     uint64_t t2 = rdcycle();
 
@@ -70,7 +83,7 @@ int main() {
     // decryption start area
     printf(">> Decrypt start: L:%lu\n", data_len);
 
-    uint8_t* plaintext_area = Aes256AccelSetup(data_len); // fence, write zero
+    uint8_t* plaintext_area = AESCBCAccelSetup(data_len); // fence, write zero
 
     printf("src start addr: 0x%016" PRIx64 "\n", (uint64_t)ciphertext_area);
     printf("dest start addr: 0x%016" PRIx64 "\n", (uint64_t)plaintext_area);
@@ -78,13 +91,15 @@ int main() {
     t1 = rdcycle();
 
     // decrypt
-    Aes256Accel(false,
+    AESCBCAccel(false,
                 ciphertext_area,
                 data_len,
                 key[0],
                 key[1],
                 key[2],
                 key[3],
+                iv[0],
+                iv[1],
                 plaintext_area);
     t2 = rdcycle();
 
@@ -114,6 +129,8 @@ int main() {
         printf("TEST PASSED!\n");
     }
   }
+
+  AESCBCUnpinPages();
 
   return 0;
 }

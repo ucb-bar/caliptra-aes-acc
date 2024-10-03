@@ -7,20 +7,35 @@
 
 #define PAGESIZE_BYTES 4096
 
-unsigned char * Aes256AccelSetup(size_t write_region_size) {
+inline void AESCBCPinPages(void) {
+#ifdef __linux
+    // pin pages s.t. they are paged in and stay paged in (all current pages + future ones)
+    if (mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
+      perror("mlockall failed");
+      exit(1);
+    }
+#endif
+}
+
+inline void AESCBCUnpinPages(void) {
+#ifdef __linux
+    // unpin pages
+    if (munlockall() != 0) {
+      perror("munlockall failed");
+      exit(1);
+    }
+#endif
+}
+
+unsigned char * AESCBCAccelSetup(size_t write_region_size) {
+    // clear the accelerator TLB
 #ifndef NOACCEL_DEBUG
     ROCC_INSTRUCTION(AES256_OPCODE, FUNCT_SFENCE);
 #endif
 
     size_t regionsize = sizeof(char) * (write_region_size);
-
     unsigned char* fixed_alloc_region = (unsigned char*)memalign(PAGESIZE_BYTES, regionsize);
-    for (uint64_t i = 0; i < regionsize; i += PAGESIZE_BYTES) {
-        fixed_alloc_region[i] = 0;
-    }
-
     uint64_t fixed_ptr_as_int = (uint64_t)fixed_alloc_region;
-
     assert((fixed_ptr_as_int & 0x7) == 0x0);
 
     printf("constructed %" PRIu64 " byte region, starting at 0x%016" PRIx64 ", paged-in, for accel\n",
@@ -29,7 +44,7 @@ unsigned char * Aes256AccelSetup(size_t write_region_size) {
     return fixed_alloc_region;
 }
 
-volatile int Aes256BlockOnCompletion(volatile int * completion_flag) {
+volatile int AESCBCBlockOnCompletion(volatile int * completion_flag) {
     uint64_t retval;
 #ifndef NOACCEL_DEBUG
     ROCC_INSTRUCTION_D(AES256_OPCODE, retval, FUNCT_CHECK_COMPLETION);
@@ -44,22 +59,19 @@ volatile int Aes256BlockOnCompletion(volatile int * completion_flag) {
     return *completion_flag;
 }
 
-void Aes256AccelNonblocking(bool encrypt,
+void AESCBCAccelNonblocking(bool encrypt,
                             const unsigned char* data,
                             size_t data_length,
                             uint64_t key0,
                             uint64_t key1,
                             uint64_t key2,
                             uint64_t key3,
+                            uint64_t iv0,
+                            uint64_t iv1,
                             unsigned char* result,
                             int* success_flag) {
     assert (data_length % 16 == 0 && "Data length must be divisible by block size of 128b (16B)");
 #ifndef NOACCEL_DEBUG
-    ROCC_INSTRUCTION_SS(AES256_OPCODE,
-                        (uint64_t)data,
-                        (uint64_t)data_length,
-                        FUNCT_SRC_INFO);
-
     ROCC_INSTRUCTION_SS(AES256_OPCODE,
                         (uint64_t)key0,
                         (uint64_t)key1,
@@ -70,9 +82,20 @@ void Aes256AccelNonblocking(bool encrypt,
                         (uint64_t)key3,
                         FUNCT_KEY_1);
 
+    ROCC_INSTRUCTION_SS(AES256_OPCODE,
+                        (uint64_t)iv0,
+                        (uint64_t)iv1,
+                        FUNCT_IV);
+
     ROCC_INSTRUCTION_S(AES256_OPCODE,
                         (uint64_t)encrypt,
                         FUNCT_MODE);
+
+    // this triggers the encrypt/decryption
+    ROCC_INSTRUCTION_SS(AES256_OPCODE,
+                        (uint64_t)data,
+                        (uint64_t)data_length,
+                        FUNCT_SRC_INFO);
 
     ROCC_INSTRUCTION_SS(AES256_OPCODE,
                         (uint64_t)result,
@@ -81,13 +104,15 @@ void Aes256AccelNonblocking(bool encrypt,
 #endif
 }
 
-int Aes256Accel(bool encrypt,
+int AESCBCAccel(bool encrypt,
                 const unsigned char* data,
                 size_t data_length,
                 uint64_t key0,
                 uint64_t key1,
                 uint64_t key2,
                 uint64_t key3,
+                uint64_t iv0,
+                uint64_t iv1,
                 unsigned char* result) {
     int completion_flag = 0;
 
@@ -95,14 +120,16 @@ int Aes256Accel(bool encrypt,
     printf("completion_flag addr : 0x%x\n", &completion_flag);
 #endif
 
-    Aes256AccelNonblocking(encrypt,
+    AESCBCAccelNonblocking(encrypt,
                             data,
                             data_length,
                             key0,
                             key1,
                             key2,
                             key3,
+                            iv0,
+                            iv1,
                             result,
                             &completion_flag);
-    return Aes256BlockOnCompletion(&completion_flag);
+    return AESCBCBlockOnCompletion(&completion_flag);
 }

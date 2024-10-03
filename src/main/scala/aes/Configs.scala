@@ -11,14 +11,14 @@ import freechips.rocketchip.rocket.{TLBConfig}
 import freechips.rocketchip.diplomacy.{LazyModule}
 import roccaccutils._
 
-case object AES256ECBAccelInsertXbarBetweenMemory extends Field[Boolean](true)
-case object AES256ECBAccelCmdQueueDepth extends Field[Int](2)
+case object AESCBCAccelInsertXbarBetweenMemory extends Field[Boolean](true)
+case object AESCBCAccelCmdQueueDepth extends Field[Int](2)
 
-class WithAES256ECBAccel extends Config ((site, here, up) => {
-  case AES256AccelTLB => Some(TLBConfig(nSets = 4, nWays = 4, nSectors = 1, nSuperpageEntries = 1))
+class WithAESCBCAccel extends Config ((site, here, up) => {
+  case AESCBCAccelTLB => Some(TLBConfig(nSets = 4, nWays = 4, nSectors = 1, nSuperpageEntries = 1))
   case BuildRoCC => up(BuildRoCC) ++ Seq(
     (p: Parameters) => {
-      val acc = LazyModule(new AES256ECBAccel(OpcodeSet.custom1)(p))
+      val acc = LazyModule(new AESCBCAccel(OpcodeSet.custom1)(p))
       acc
     }
   )

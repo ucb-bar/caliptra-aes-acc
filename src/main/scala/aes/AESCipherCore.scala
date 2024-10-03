@@ -21,19 +21,19 @@ import roccaccutils._
 //     sw/device/lib/crypto/drivers/aes.c
 //     sw/device/lib/crypto/drivers/aes_test.c
 
-trait AESConsts {
+object AESConsts {
   val BLOCK_SZ_BYTES = 16
   val BLOCK_SZ_BITS = BLOCK_SZ_BYTES * 8
 }
+import AESConsts._
 
-object AES256Consts extends AESConsts {
-  val KEY_SZ_BYTES = 32
-  val KEY_SZ_BITS = KEY_SZ_BYTES * 8
+object CBCConsts {
+  val IV_SZ_BYTES = BLOCK_SZ_BYTES
+  val IV_SZ_BITS = BLOCK_SZ_BITS
 }
-import AES256Consts._
 
-// AES256 Encrypt/Decrypt Block (ECB-mode, no security masking)
-class AesCipherCoreWrapper_AES256_ECB_NoMask
+// AES256 Encrypt/Decrypt Block (no security masking)
+class AESCipherCoreWrapper_AES256_NoMask(keySzBits: Int)
   //extends BlackBox with HasBlackBoxResource {
   // TODO: BlackBoxPath causes issues when there are duplicates in firtool
   extends BlackBox with HasBlackBoxPath {
@@ -61,7 +61,7 @@ class AesCipherCoreWrapper_AES256_ECB_NoMask
     val entropy_i = Input(UInt(32.W))
 
     val state_init_i_0 = Input(UInt(BLOCK_SZ_BITS.W))
-    val key_init_i_0 = Input(UInt(KEY_SZ_BITS.W))
+    val key_init_i_0 = Input(UInt(keySzBits.W))
     val state_o_0 = Output(UInt(BLOCK_SZ_BITS.W))
 
     val alert_o = Output(Bool())
@@ -81,10 +81,10 @@ class AesCipherCoreWrapper_AES256_ECB_NoMask
   //addResource(s"$vsrcDirPostfix/core.sv")
 }
 
-class InCryptBundle extends Bundle {
+class InCryptBundle(keySzBits: Int) extends Bundle {
   val encrypt = Input(Bool()) // if not then decrypt
   val data = Input(UInt(BLOCK_SZ_BITS.W))
-  val key = Input(UInt(KEY_SZ_BITS.W))
+  val key = Input(UInt(keySzBits.W))
 }
 
 class OutCryptBundle extends Bundle {
@@ -93,21 +93,24 @@ class OutCryptBundle extends Bundle {
 
 // ECB-mode AES-256 block driver
 //   - Expects the key to stay the same throughout the entire time of {en,de}crypting
-class AesCipherCoreDriver extends Module {
+class AESCipherCoreDriver(keySzBits: Int) extends Module {
   val io = IO(new Bundle {
-    val in = Flipped(DecoupledIO(new InCryptBundle))
+    val in = Flipped(DecoupledIO(new InCryptBundle(keySzBits)))
     val out = DecoupledIO(new OutCryptBundle)
   })
 
-  object AesCipherCoreConsts {
+  // TODO: support 128b key
+  require(keySzBits == 256)
+
+  object AESCipherCoreConsts {
     val AES_256 = "b100".U
 
     val CIPH_FWD = "b01".U
     val CIPH_INV = "b10".U
   }
-  import AesCipherCoreConsts._
+  import AESCipherCoreConsts._
 
-  val acc = Module(new AesCipherCoreWrapper_AES256_ECB_NoMask)
+  val acc = Module(new AESCipherCoreWrapper_AES256_NoMask(keySzBits))
   acc.io.clk_i := clock
   acc.io.rst_ni := !reset.asBool
 

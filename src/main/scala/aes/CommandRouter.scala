@@ -9,16 +9,18 @@ import org.chipsalliance.cde.config.{Parameters}
 import freechips.rocketchip.util.DecoupledHelper
 import roccaccutils._
 
-class CommandRouter(val cmd_queue_depth: Int)(implicit val p: Parameters) extends StreamingCommandRouter {
+class CommandRouter(keySzBits: Int, val cmd_queue_depth: Int)(implicit val p: Parameters) extends StreamingCommandRouter {
   class AesStreamerCmdBundle()(implicit p: Parameters) extends MemStreamerCmdBundle {
-    val key = Valid(UInt(AES256Consts.KEY_SZ_BITS.W))
+    val key = Valid(UInt(keySzBits.W))
     val mode = Valid(Bool())
+    val iv = Valid(UInt(CBCConsts.IV_SZ_BITS.W))
   }
   lazy val io = IO(new AesStreamerCmdBundle) // lazy matters
 
   val FUNCT_MODE                          = 4.U
   val FUNCT_KEY_0                         = 5.U
   val FUNCT_KEY_1                         = 6.U
+  val FUNCT_IV                            = 7.U
 
   // Mode interface
   val mode_queue = Module(new Queue(Bool(), cmd_queue_depth))
@@ -34,7 +36,7 @@ class CommandRouter(val cmd_queue_depth: Int)(implicit val p: Parameters) extend
   mode_queue.io.deq.ready := true.B
 
   // Key interface
-  val key_queue = Module(new Queue(UInt(AES256Consts.KEY_SZ_BITS.W), cmd_queue_depth))
+  val key_queue = Module(new Queue(UInt(keySzBits.W), cmd_queue_depth))
   val key_lower_128 = RegInit(0.U(128.W))
   val key0_fire = DecoupledHelper(
     io.rocc_in.valid,
@@ -55,9 +57,23 @@ class CommandRouter(val cmd_queue_depth: Int)(implicit val p: Parameters) extend
   io.key.valid <> key_queue.io.deq.valid
   key_queue.io.deq.ready := true.B
 
+  // IV interface
+  val iv_queue = Module(new Queue(UInt(CBCConsts.IV_SZ_BITS.W), cmd_queue_depth))
+  iv_queue.io.enq.bits := Cat(cur_rs1, cur_rs2)
+  val iv_fire = DecoupledHelper(
+    io.rocc_in.valid,
+    cur_funct === FUNCT_IV,
+    iv_queue.io.enq.ready
+  )
+  iv_queue.io.enq.valid := iv_fire.fire(iv_queue.io.enq.ready)
+  io.iv.bits <> iv_queue.io.deq.bits
+  io.iv.valid <> iv_queue.io.deq.valid
+  iv_queue.io.deq.ready := true.B
+
   // streaming_fire provided by StreamingCommandRouter
   io.rocc_in.ready := streaming_fire ||
     mode_fire.fire(io.rocc_in.valid) ||
     key0_fire.fire(io.rocc_in.valid) ||
-    key1_fire.fire(io.rocc_in.valid)
+    key1_fire.fire(io.rocc_in.valid) ||
+    iv_fire.fire(io.rocc_in.valid)
 }

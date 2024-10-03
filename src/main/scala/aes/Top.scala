@@ -13,28 +13,29 @@ import freechips.rocketchip.rocket.constants.MemoryOpConstants
 import freechips.rocketchip.tilelink._
 import roccaccutils._
 
-case object AES256AccelTLB extends Field[Option[TLBConfig]](None)
+case object AESCBCAccelTLB extends Field[Option[TLBConfig]](None)
 
-class AES256ECBAccel(opcodes: OpcodeSet)(implicit p: Parameters) extends MemStreamerAccel(
+class AESCBCAccel(opcodes: OpcodeSet, val keySzBits: Int = 256)(implicit p: Parameters) extends MemStreamerAccel(
   opcodes = opcodes) {
 
-  override lazy val module = new AES256ECBAccelImp(this)
+  override lazy val module = new AESCBCAccelImp(this)
 
-  require(p(SystemBusKey).beatBytes == 32, "Only tested on 32B SBUS width") // TODO: should work for 128b
+  require(p(SystemBusKey).beatBytes == 32, "Only tested on 32B SBUS width") // TODO: should work for 128b bus
 
-  lazy val tlbConfig = p(AES256AccelTLB).get
-  lazy val xbarBetweenMem = p(AES256ECBAccelInsertXbarBetweenMemory)
-  lazy val logger = AES256ECBLogger
+  lazy val tlbConfig = p(AESCBCAccelTLB).get
+  lazy val xbarBetweenMem = p(AESCBCAccelInsertXbarBetweenMemory)
+  lazy val logger = AESCBCLogger
 }
 
-class AES256ECBAccelImp(outer: AES256ECBAccel)(implicit p: Parameters)
+class AESCBCAccelImp(outer: AESCBCAccel)(implicit p: Parameters)
   extends MemStreamerAccelImp(outer) {
 
-  lazy val queueDepth = p(AES256ECBAccelCmdQueueDepth)
+  lazy val queueDepth = p(AESCBCAccelCmdQueueDepth)
 
-  lazy val cmd_router = Module(new CommandRouter(queueDepth))
-  lazy val streamer = Module(new AES256ECB(outer.logger))
+  lazy val cmd_router = Module(new CommandRouter(outer.keySzBits, queueDepth))
+  lazy val streamer = Module(new AESCBC(outer.keySzBits, outer.logger))
 
   streamer.io.key <> cmd_router.io.key
   streamer.io.mode <> cmd_router.io.mode
+  streamer.io.iv <> cmd_router.io.iv
 }

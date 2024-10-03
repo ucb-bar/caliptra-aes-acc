@@ -3,12 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#define OPCODE8
-#ifndef OPCODE8
 #include "rocc.h"
-#else
-#include "rocc_opcode8.h"
-#endif
 #include <stdbool.h>
 
 #define AES256_OPCODE 1
@@ -18,30 +13,38 @@
 #define FUNCT_MODE 4
 #define FUNCT_KEY_0 5
 #define FUNCT_KEY_1 6
+#define FUNCT_IV 7
 #define FUNCT_DEST_INFO 2
 #define FUNCT_CHECK_COMPLETION 3
 
-unsigned char * Aes256AccelSetup(size_t write_region_size);
+inline void AESCBCPinPages(void);
+inline void AESCBCUnpinPages(void);
 
-void Aes256AccelNonblocking(bool encrypt,
-                            const unsigned char* data,
-                            size_t data_length,
-                            uint64_t key0,
-                            uint64_t key1,
-                            uint64_t key2,
-                            uint64_t key3,
-                            unsigned char* result,
-                            int* success_flag);
+unsigned char * AESCBCAccelSetup(size_t write_region_size);
 
-int Aes256Accel(bool encrypt,
+void AESCBCAccelNonblocking(bool encrypt,
                 const unsigned char* data,
                 size_t data_length,
                 uint64_t key0,
                 uint64_t key1,
                 uint64_t key2,
                 uint64_t key3,
+                uint64_t iv0,
+                uint64_t iv1,
+                unsigned char* result,
+                int* success_flag);
+
+int AESCBCAccel(bool encrypt,
+                const unsigned char* data,
+                size_t data_length,
+                uint64_t key0,
+                uint64_t key1,
+                uint64_t key2,
+                uint64_t key3,
+                uint64_t iv0,
+                uint64_t iv1,
                 unsigned char* result);
 
-volatile int Aes256BlockOnCompletion(volatile int * completion_flag);
+volatile int AESCBCBlockOnCompletion(volatile int * completion_flag);
 
 #endif //__ACCEL_H

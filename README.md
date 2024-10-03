@@ -2,6 +2,6 @@ Caliptra AES RoCC Accelerator
 -----------------------------
 
 This wraps up the AES cipher core from the Caliptra Root of Trust project (https://github.com/chipsalliance/caliptra-rtl) into a RoCC accelerator to be used in Rocket Chip based designs.
-Currently only AES256 ECB is supported.
+Currently only AES256 CBC is supported. Only supports a multiple of a block size 128b.
 
 For more information on how to use this wrapper, refer to (https://github.com/ucb-bar/chipyard).

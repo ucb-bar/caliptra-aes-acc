@@ -18,7 +18,7 @@ TB_FILES = \
     $(VSRC_DIR)/aes_cipher_core_tb.sv
 
 WRAPPER_FILES = \
-    $(VSRC_DIR)/AesCipherCoreWrapper_AES256_ECB_NoMask.sv
+    $(VSRC_DIR)/AESCipherCoreWrapper_AES256_NoMask.sv
 
 AES_FILES = \
     $(VSRC_DIR)/rtl/aes_cipher_control_fsm_n.sv \
@@ -55,8 +55,18 @@ INC_DIRS ?= $(foreach dir_name,$(INC_DIR_NAMES),$(call lookup_dirs,$(dir_name)))
 
 PREPROC_SCRIPT = $(BASE_DIR)/scripts/insert-includes.py
 
+# TODO:
+# unintuitive
+# defines VERILATOR even when not verilator so that asserts are found in VCS
+# if running under verilator, then you should *not* define VERILATOR
+#
+# ideally want:
+#   if define found keep and do not remove at the end
+#   if not found, then define and remove at the end
 PREPROC_DEFINES ?= \
-	SYNTHESIS
+	SYNTHESIS \
+	VERILATOR
+
 
 .PHONY: default
 default: core

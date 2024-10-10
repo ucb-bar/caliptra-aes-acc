@@ -12,19 +12,22 @@ import freechips.rocketchip.subsystem.{SystemBusKey}
 import freechips.rocketchip.rocket.constants.MemoryOpConstants
 import freechips.rocketchip.tilelink._
 import roccaccutils._
+import testchipip.soc.{BankedScratchpadParams}
 
 case object AESCBCAccelTLB extends Field[Option[TLBConfig]](None)
 
-class AESCBCAccel(opcodes: OpcodeSet, val keySzBits: Int = 256)(implicit p: Parameters) extends MemStreamerAccel(
+class AESCBCAccel(opcodes: OpcodeSet, spadParams: Option[BankedScratchpadParams] = None, val keySzBits: Int = 256)(implicit p: Parameters) extends MemStreamerAccel(
   opcodes = opcodes) {
 
   override lazy val module = new AESCBCAccelImp(this)
+  //chisel3.experimental.annotate(midas.targetutils.EnableModelMultiThreadingAnnotation(module))
 
   require(p(SystemBusKey).beatBytes == 32, "Only tested on 32B SBUS width") // TODO: should work for 128b bus
 
   lazy val tlbConfig = p(AESCBCAccelTLB).get
   lazy val xbarBetweenMem = p(AESCBCAccelInsertXbarBetweenMemory)
   lazy val logger = AESCBCLogger
+  lazy val spad = spadParams
 }
 
 class AESCBCAccelImp(outer: AESCBCAccel)(implicit p: Parameters)

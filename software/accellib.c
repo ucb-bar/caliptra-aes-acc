@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include "accellib.h"
+#ifdef __linux
+#include <sys/mman.h>
+#endif
 
 #define PAGESIZE_BYTES 4096
 

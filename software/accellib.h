@@ -17,8 +17,8 @@
 #define FUNCT_DEST_INFO 2
 #define FUNCT_CHECK_COMPLETION 3
 
-inline void AESCBCPinPages(void);
-inline void AESCBCUnpinPages(void);
+void AESCBCPinPages(void);
+void AESCBCUnpinPages(void);
 
 unsigned char * AESCBCAccelSetup(size_t write_region_size);
 
@@ -32,9 +32,9 @@ void AESCBCAccelNonblocking(bool encrypt,
                 uint64_t iv0,
                 uint64_t iv1,
                 unsigned char* result,
-                int* success_flag);
+                uint64_t* success_flag);
 
-int AESCBCAccel(bool encrypt,
+uint64_t AESCBCAccel(bool encrypt,
                 const unsigned char* data,
                 size_t data_length,
                 uint64_t key0,
@@ -45,6 +45,6 @@ int AESCBCAccel(bool encrypt,
                 uint64_t iv1,
                 unsigned char* result);
 
-volatile int AESCBCBlockOnCompletion(volatile int * completion_flag);
+volatile uint64_t AESCBCBlockOnCompletion(volatile uint64_t * completion_flag);
 
 #endif //__ACCEL_H

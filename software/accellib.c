@@ -10,7 +10,7 @@
 
 #define PAGESIZE_BYTES 4096
 
-inline void AESCBCPinPages(void) {
+void AESCBCPinPages(void) {
 #ifdef __linux
     // pin pages s.t. they are paged in and stay paged in (all current pages + future ones)
     if (mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
@@ -20,7 +20,7 @@ inline void AESCBCPinPages(void) {
 #endif
 }
 
-inline void AESCBCUnpinPages(void) {
+void AESCBCUnpinPages(void) {
 #ifdef __linux
     // unpin pages
     if (munlockall() != 0) {
@@ -47,7 +47,7 @@ unsigned char * AESCBCAccelSetup(size_t write_region_size) {
     return fixed_alloc_region;
 }
 
-volatile int AESCBCBlockOnCompletion(volatile int * completion_flag) {
+volatile uint64_t AESCBCBlockOnCompletion(volatile uint64_t * completion_flag) {
     uint64_t retval;
 #ifndef NOACCEL_DEBUG
     ROCC_INSTRUCTION_D(AES256_OPCODE, retval, FUNCT_CHECK_COMPLETION);
@@ -72,7 +72,7 @@ void AESCBCAccelNonblocking(bool encrypt,
                             uint64_t iv0,
                             uint64_t iv1,
                             unsigned char* result,
-                            int* success_flag) {
+                            uint64_t* success_flag) {
     assert (data_length % 16 == 0 && "Data length must be divisible by block size of 128b (16B)");
 #ifndef NOACCEL_DEBUG
     ROCC_INSTRUCTION_SS(AES256_OPCODE,
@@ -107,7 +107,7 @@ void AESCBCAccelNonblocking(bool encrypt,
 #endif
 }
 
-int AESCBCAccel(bool encrypt,
+uint64_t AESCBCAccel(bool encrypt,
                 const unsigned char* data,
                 size_t data_length,
                 uint64_t key0,
@@ -117,7 +117,7 @@ int AESCBCAccel(bool encrypt,
                 uint64_t iv0,
                 uint64_t iv1,
                 unsigned char* result) {
-    int completion_flag = 0;
+    uint64_t completion_flag = 0;
 
 #ifdef NOACCEL_DEBUG
     printf("completion_flag addr : 0x%x\n", &completion_flag);

@@ -59,7 +59,7 @@ class CommandRouter(keySzBits: Int, val cmd_queue_depth: Int)(implicit val p: Pa
 
   // IV interface
   val iv_queue = Module(new Queue(UInt(CBCConsts.IV_SZ_BITS.W), cmd_queue_depth))
-  iv_queue.io.enq.bits := Cat(cur_rs1, cur_rs2)
+  iv_queue.io.enq.bits := Cat(cur_rs2, cur_rs1)
   val iv_fire = DecoupledHelper(
     io.rocc_in.valid,
     cur_funct === FUNCT_IV,

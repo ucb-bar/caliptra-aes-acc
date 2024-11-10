@@ -42,14 +42,18 @@ int main() {
     //key[i] = 0;
     key[i] = rand();
   }
+  printf("Key:\n");
+  print_blocks((unsigned char*)key, 1);
 
   // initialize random iv
   uint64_t iv[2];
   for (size_t i = 0; i < 2; ++i) {
-    //iv[i] = (i + 1) * 4;
+    iv[i] = (i + 1) * 4;
     //iv[i] = 0;
-    iv[i] = rand();
+    //iv[i] = rand();
   }
+  printf("IV:\n");
+  print_blocks((unsigned char*)iv, 1);
 
   AESCBCPinPages();
 
@@ -85,8 +89,8 @@ int main() {
                 data_len,
                 key[0],
                 key[1],
-                key[2],
-                key[3],
+                0,
+                0,
                 iv[0],
                 iv[1],
                 ciphertext_area);

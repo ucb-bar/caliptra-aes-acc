@@ -36,7 +36,7 @@ object CBCConsts {
 class AESCipherCoreWrapper_AES256_NoMask(keySzBits: Int)
   //extends BlackBox with HasBlackBoxResource {
   // TODO: BlackBoxPath causes issues when there are duplicates in firtool
-  extends BlackBox with HasBlackBoxPath {
+  extends BlackBox(Map("KEY_SZ_BITS" -> keySzBits)) with HasBlackBoxPath {
   val io = IO(new Bundle {
     val clk_i = Input(Clock())
     val rst_ni = Input(Reset())
@@ -99,10 +99,11 @@ class AESCipherCoreDriver(keySzBits: Int) extends Module {
     val out = DecoupledIO(new OutCryptBundle)
   })
 
-  // TODO: support 128b key
-  require(keySzBits == 256)
+  // TODO: support 256b key
+  require(keySzBits == 128)
 
   object AESCipherCoreConsts {
+    val AES_128 = "b001".U
     val AES_256 = "b100".U
 
     val CIPH_FWD = "b01".U
@@ -114,7 +115,7 @@ class AESCipherCoreDriver(keySzBits: Int) extends Module {
   acc.io.clk_i := clock
   acc.io.rst_ni := !reset.asBool
 
-  acc.io.key_len_i := AES_256
+  acc.io.key_len_i := AES_128
   acc.io.entropy_ack_i := true.B // entropy is always available
   val entropy_i = RegInit(0.U(32.W))
   when (acc.io.entropy_req_o) {

@@ -5,17 +5,28 @@ from Crypto.Cipher import AES
 def hexStr(s):
     return ":".join("{:02x}".format(c) for c in s)
 
-iv = bytes.fromhex('00000000000000040000000000000008') # 16B IV
-key = bytes.fromhex('0000000000000000000000000000000200000000000000040000000000000006') # 32B key
-print(f'key = {hexStr(key)}')
-cipher = AES.new(key, AES.MODE_CBC, iv)
+# 8b byte
+def reversebybyte(string):
+    return ''.join(reversed([string[i:i+2] for i in range(0, len(string), 2)]))
 
-#data = bytes.fromhex('0f0e0d0c0b0a09080706050403020100') # 128b/16B block
-data = bytes.fromhex('000102030405060708090a0b0c0d0e0f') # 128b/16B block
-print(f'data = {hexStr(data)}')
+# 64b word
+def reversebyword(string):
+    return ''.join(reversed([string[i:i+16] for i in range(0, len(string), 16)]))
 
-ciphertext = cipher.encrypt(data)
-print(f'ciphertext = {hexStr(ciphertext)}')
+ivstr   = 'ad23511a2d847eedf88452796d8aca9c'
+keystr  = '00000000000000000000000000000000'
+datastr = '97bb9d3b99067e1718d57c1a51268d00'
 
-# ciphertext = cipher.encrypt(data)
-# print(f'ciphertext = {hexStr(ciphertext)}')
+combos = []
+combos.append(((ivstr), (keystr), (datastr)))
+
+for combo in combos:
+    iv   = bytes.fromhex(combo[0])
+    key  = bytes.fromhex(combo[1])
+    data = bytes.fromhex(combo[2])
+    print(f'iv = {hexStr(iv)}')
+    print(f'key = {hexStr(key)}')
+    print(f'data = {hexStr(data)}')
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    ciphertext = cipher.decrypt(data)
+    print(f'ciphertext = {hexStr(ciphertext)}')

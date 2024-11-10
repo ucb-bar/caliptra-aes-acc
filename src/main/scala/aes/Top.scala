@@ -16,7 +16,7 @@ import testchipip.soc.{BankedScratchpadParams}
 
 case object AESCBCAccelTLB extends Field[Option[TLBConfig]](None)
 
-class AESCBCAccel(opcodes: OpcodeSet, spadParams: Option[BankedScratchpadParams] = None, val keySzBits: Int = 256)(implicit p: Parameters) extends MemStreamerAccel(
+class AESCBCAccel(opcodes: OpcodeSet, spadParams: Option[BankedScratchpadParams] = None, val keySzBits: Int = 128)(implicit p: Parameters) extends MemStreamerAccel(
   opcodes = opcodes) {
 
   override lazy val module = new AESCBCAccelImp(this)

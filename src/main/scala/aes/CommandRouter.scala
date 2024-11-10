@@ -44,7 +44,7 @@ class CommandRouter(keySzBits: Int, val cmd_queue_depth: Int)(implicit val p: Pa
     key_queue.io.enq.ready
   )
   when (key0_fire.fire(key_queue.io.enq.ready)) {
-    key_lower_128 := Cat(cur_rs1, cur_rs2)
+    key_lower_128 := Cat(cur_rs2, cur_rs1)
   }
   val key1_fire = DecoupledHelper(
     io.rocc_in.valid,
@@ -52,7 +52,7 @@ class CommandRouter(keySzBits: Int, val cmd_queue_depth: Int)(implicit val p: Pa
     key_queue.io.enq.ready
   )
   key_queue.io.enq.valid := key1_fire.fire(key_queue.io.enq.ready)
-  key_queue.io.enq.bits := Cat(Cat(cur_rs1, cur_rs2), key_lower_128)
+  key_queue.io.enq.bits := Cat(Cat(cur_rs2, cur_rs1), key_lower_128)
   io.key.bits <> key_queue.io.deq.bits
   io.key.valid <> key_queue.io.deq.valid
   key_queue.io.deq.ready := true.B

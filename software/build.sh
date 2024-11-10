@@ -13,4 +13,8 @@ riscv64-unknown-elf-gcc -g -fno-common -fno-builtin-printf -specs=htif_nano.spec
 riscv64-unknown-elf-gcc -g -fno-common -fno-builtin-printf -specs=htif_nano.specs -c test.c
 riscv64-unknown-elf-gcc -g -static -specs=htif_nano.specs accellib.o test.o -o test.riscv
 riscv64-unknown-elf-objdump -S test.riscv > test.dump
+riscv64-unknown-elf-gcc -g -fno-common -fno-builtin-printf -specs=htif_nano.specs -c accellib.c
+riscv64-unknown-elf-gcc -g -fno-common -fno-builtin-printf -specs=htif_nano.specs -c test-rerocc.c
+riscv64-unknown-elf-gcc -g -static -specs=htif_nano.specs accellib.o test-rerocc.o -o test-rerocc.riscv
+riscv64-unknown-elf-objdump -S test-rerocc.riscv > test-rerocc.dump
 popd

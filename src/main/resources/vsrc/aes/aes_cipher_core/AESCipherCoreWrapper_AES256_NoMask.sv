@@ -1,6 +1,6 @@
 // See LICENSE for license details
 
-module AESCipherCoreWrapper_AES256_NoMask
+module AESCipherCoreWrapper_AES256_NoMask #(parameter KEY_SZ_BITS=256)
 (
   input  logic                        clk_i,
   input  logic                        rst_ni,
@@ -32,7 +32,7 @@ module AESCipherCoreWrapper_AES256_NoMask
 
   // I/O data & initial key
   input  logic                [127:0] state_init_i_0,
-  input  logic                [255:0] key_init_i_0,
+  input  logic                [KEY_SZ_BITS-1:0] key_init_i_0,
   output logic                [127:0] state_o_0
 );
 

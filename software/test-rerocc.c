@@ -11,8 +11,7 @@
 #define AES_BLOCK_BITS (128)
 #define AES_BLOCK_BYTES (AES_BLOCK_BITS / 8)
 
-#define ROUNDS 10
-#define MAX_DATA_LEN_BYTES (ROUNDS * AES_BLOCK_BYTES)
+#define MAX_DATA_LEN_BYTES (8192)
 
 void print_blocks(unsigned char* data, size_t blk_cnt) {
   uint64_t* data64 = (uint64_t*)data;
@@ -68,66 +67,77 @@ int main() {
   rr_fence(CONFIG_CFG_ID);
   printf("Done with ReRoCC setup\n");
 
-  // begin ROUNDS of encrypt/decrypt (ROUND is i * AES_BLOCK_BYTES encrypt/decrypt + check)
-  for (size_t r = 1; r <= ROUNDS; ++r) {
-    uint64_t data_len = r * AES_BLOCK_BYTES;
+  // dont' care about tlb
+  uint8_t* ciphertext_area = AESCBCAccelSetup(MAX_DATA_LEN_BYTES); // fence, write zero
+  uint8_t* plaintext_area = AESCBCAccelSetup(MAX_DATA_LEN_BYTES); // fence, write zero
 
-    print_blocks(data, r);
+  size_t cur_sz_bytes = AES_BLOCK_BYTES;
+  while (cur_sz_bytes <= MAX_DATA_LEN_BYTES) {
+    uint64_t data_len = cur_sz_bytes;
+
+    //print_blocks(data, r);
 
     printf(">> Encrypt start: L:%lu\n", data_len);
 
-    uint8_t* ciphertext_area = AESCBCAccelSetup(data_len); // fence, write zero
 
-    printf("src start addr: 0x%016" PRIx64 "\n", (uint64_t)data);
-    printf("dest start addr: 0x%016" PRIx64 "\n", (uint64_t)ciphertext_area);
+    // printf("src start addr: 0x%016" PRIx64 "\n", (uint64_t)data);
+    // printf("dest start addr: 0x%016" PRIx64 "\n", (uint64_t)ciphertext_area);
+    #define ITERS (5)
+    uint64_t sum = 0;
+    for (size_t i = 0; i < ITERS; ++i) {
+      uint64_t t1 = rdcycle();
+      // encrypt
+      AESCBCAccel(true,
+                  data,
+                  data_len,
+                  key[0],
+                  key[1],
+                  0,
+                  0,
+                  iv[0],
+                  iv[1],
+                  ciphertext_area);
+      uint64_t t2 = rdcycle();
+      printf("Start cycle: %" PRIu64 ", End cycle: %" PRIu64 ", Took: %" PRIu64 "\n",
+              t1, t2, t2 - t1);
+      sum += t2 - t1;
+    }
+    printf("Avg: %" PRIu64 "\n", sum / ITERS);
 
-    uint64_t t1 = rdcycle();
 
-    // encrypt
-    AESCBCAccel(true,
-                data,
-                data_len,
-                key[0],
-                key[1],
-                0,
-                0,
-                iv[0],
-                iv[1],
-                ciphertext_area);
-    uint64_t t2 = rdcycle();
-
-    printf("Start cycle: %" PRIu64 ", End cycle: %" PRIu64 ", Took: %" PRIu64 "\n",
-            t1, t2, t2 - t1);
-
-    print_blocks(ciphertext_area, r);
+    //print_blocks(ciphertext_area, r);
 
     // decryption start area
     printf(">> Decrypt start: L:%lu\n", data_len);
 
-    uint8_t* plaintext_area = AESCBCAccelSetup(data_len); // fence, write zero
 
-    printf("src start addr: 0x%016" PRIx64 "\n", (uint64_t)ciphertext_area);
-    printf("dest start addr: 0x%016" PRIx64 "\n", (uint64_t)plaintext_area);
+    // printf("src start addr: 0x%016" PRIx64 "\n", (uint64_t)ciphertext_area);
+    // printf("dest start addr: 0x%016" PRIx64 "\n", (uint64_t)plaintext_area);
 
-    t1 = rdcycle();
+    sum = 0;
+    for (size_t i = 0; i < ITERS; ++i) {
+      uint64_t t1 = rdcycle();
 
-    // decrypt
-    AESCBCAccel(false,
-                ciphertext_area,
-                data_len,
-                key[0],
-                key[1],
-                key[2],
-                key[3],
-                iv[0],
-                iv[1],
-                plaintext_area);
-    t2 = rdcycle();
+      // decrypt
+      AESCBCAccel(false,
+                  ciphertext_area,
+                  data_len,
+                  key[0],
+                  key[1],
+                  key[2],
+                  key[3],
+                  iv[0],
+                  iv[1],
+                  plaintext_area);
+      uint64_t t2 = rdcycle();
 
-    printf("Start cycle: %" PRIu64 ", End cycle: %" PRIu64 ", Took: %" PRIu64 "\n",
-            t1, t2, t2 - t1);
+      printf("Start cycle: %" PRIu64 ", End cycle: %" PRIu64 ", Took: %" PRIu64 "\n",
+              t1, t2, t2 - t1);
+      sum += t2 - t1;
+    }
+    printf("Avg: %" PRIu64 "\n", sum / ITERS);
 
-    print_blocks(plaintext_area, r);
+    //print_blocks(plaintext_area, r);
 
     printf("Checking encrypt/decrypt data correctness:\n");
     bool fail = false;
@@ -140,16 +150,18 @@ int main() {
       }
     }
 
-    free(ciphertext_area);
-    free(plaintext_area);
-
     if (fail) {
         printf("TEST FAILED!\n");
         exit(1);
     } else {
         printf("TEST PASSED!\n");
     }
+
+    cur_sz_bytes *= 2;
   }
+
+  free(ciphertext_area);
+  free(plaintext_area);
 
   rr_release(CONFIG_CFG_ID);
   AESCBCUnpinPages();

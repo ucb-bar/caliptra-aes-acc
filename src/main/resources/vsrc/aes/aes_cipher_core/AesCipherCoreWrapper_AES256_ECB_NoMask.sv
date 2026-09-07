@@ -112,7 +112,7 @@ module AesCipherCoreWrapper_AES256_ECB_NoMask
     .alert_fatal_i    ( 1'b0                  ), // Ignored.
     .alert_o          ( alert_o               ), // Ignored.
 
-    .prd_clearing_i   ( '{prd_clearing_i_0}   ),
+    .prd_clearing_i   ( WidthPRDClearing'(prd_clearing_i_0)   ),
 
     .force_masks_i    ( 1'b0                  ), // Ignored.
     .data_in_mask_o   ( data_in_mask_o        ),

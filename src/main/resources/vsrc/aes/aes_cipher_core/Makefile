@@ -21,6 +21,7 @@ WRAPPER_FILES = \
     $(VSRC_DIR)/AesCipherCoreWrapper_AES256_ECB_NoMask.sv
 
 AES_FILES = \
+    $(VSRC_DIR)/rtl/caliptra_prim_assert_dummy_macros.svh \
     $(VSRC_DIR)/rtl/aes_cipher_control_fsm_n.sv \
     $(VSRC_DIR)/rtl/aes_cipher_control_fsm_p.sv \
     $(VSRC_DIR)/rtl/aes_cipher_control_fsm.sv \
